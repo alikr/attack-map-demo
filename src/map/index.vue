@@ -21,8 +21,10 @@
 </template>
 
 <script>
-import china from './china.js';
+import map from './china.js';
 import city from './city.vue';
+
+var Map = {};
 
 export default {
   components: {
@@ -35,21 +37,25 @@ export default {
     }
   },
   mounted() {
-    this.width = window.innerWidth;
-    this.height = window.innerHeight;
-    this.showCity("world");
+    var width = this.width = window.innerWidth;
+    var height = this.height = window.innerHeight;
+    
+    var el = this.$el;
+    var svg = el.querySelector('svg');
+    var canvas = el.querySelector('canvas');
+    var {
+      width,
+      height
+    } = this;
+    
+    Map = map({svg, canvas, width, height});
+    Map.draw('world');
+
   },
   methods: {
     showCity: function(e_id) {
-      var el = this.$el;
-      var svg = el.querySelector('svg');
-      var canvas = el.querySelector('canvas');
-      var {
-        width,
-        height
-      } = this;
       var cityID = e_id.target ? e_id.target.value : e_id;
-      china(svg, canvas, width, height, cityID);
+      Map.draw(cityID);
     }
   }
 }

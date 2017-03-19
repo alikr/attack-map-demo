@@ -5,8 +5,37 @@
 
 import * as d3 from 'd3';
 import line from './line.js';
-export default function china(svg, canvas, width, height, cityID) {
-  line('stop');
+var Line = {};
+const defaults = {
+  svg: null,
+  canvas: null,
+  width: 0,
+  height: 0,
+  cityID : 'world'
+}
+const Init = function(options){
+  this.options = options;
+  return this;
+}
+Init.prototype.draw = china;
+
+const fun = function(options){
+  var opts = {};
+  for( var i in defaults ){
+    opts[i] = defaults[i];
+  }
+  for( var i in options ){
+    opts[i] = options[i];
+  }
+  Line = line(opts);
+  return new Init(opts);
+}
+
+export default fun;
+
+function china(cityID) {
+  typeof Line.stop === 'function' && Line.stop();
+  var {svg, canvas, width, height} = this.options;
   const cityIDs = [32, 43, 14];
 
   d3.json("/data/" + cityID + ".json", function(error, root) {
@@ -44,6 +73,9 @@ export default function china(svg, canvas, width, height, cityID) {
         .scale(width * 0.6)
         .translate([width / 2, height / 2]);
     }
+
+    typeof Line.stop === 'function' && Line.stop({projection});
+
     var path = d3.geoPath().projection(projection);
     var d3svg = d3.select(svg);
     var pathg = d3svg.select('.path');
@@ -98,7 +130,7 @@ export default function china(svg, canvas, width, height, cityID) {
       text.exit().remove();
       d3svg.transition().duration(500).ease(d3.easeLinear).attr('opacity',1)
       .on('end',function(){
-        line(canvas, width, height, projection);
+        typeof Line.start === 'function' && Line.start();
       });
     }
   });

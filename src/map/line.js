@@ -4,18 +4,7 @@
  */
 
 import * as d3 from 'd3';
-
-//计算控制点
-function point2cur(p, cur) {
-  var p1 = p[0];
-  var p2 = p[1];
-  var curveness = cur ? cur : 0.3;
-  var c = [
-    (p1[0] + p2[0]) / 2 - (p1[1] - p2[1]) * curveness,
-    (p1[1] + p2[1]) / 2 - (p2[0] - p1[0]) * curveness
-  ];
-  return c;
-}
+import randomData from './randomData.js';
 
 //计算时间t的1次贝赛尔曲线坐标
 function cur1Pt(t, p) {
@@ -63,10 +52,12 @@ var particler = function() {
   }
 }();
 
-const STOP = 0;
-const PAUSE = 1;
-const START = 2;
-var setting = {
+const STATUS = {
+  STOP: 0,
+  PAUSE: 1,
+  START: 2,
+}
+const defaults = {
   canvas: null,
   width: 0,
   height: 0,
@@ -74,51 +65,67 @@ var setting = {
   status: -1,
   data: [],
   speed: 0.02,
-  lineWidth: 4,
+  lineWidth: 4
+}
+const Init = function(options){
+  this.options = options;
+  return this;
+}
+Init.prototype.randomData = randomData();
+Init.prototype.draw = draw;
+Init.prototype.start = function(){
+  this.options.status = STATUS['START'];
+  this.randomData.start(this.options);
+  this.draw();
+}
+Init.prototype.stop = function(options){
+  for( var i in options ){
+    this.options[i] = options[i];
+  }
+  this.options.status = STATUS['STOP'];
+  this.options.data = [];
+  var {canvas, width, height, step} = this.options;
+  if(step && typeof step.stop ==='function')step.stop();
+  canvas && canvas.getContext('2d').clearRect(0, 0, width, height);
+  this.randomData.stop(this.options);
 }
 
-export default function line(canvas, width, height, projection) {
-  setting.data = [];
-  if(canvas === 'stop' && setting.status > STOP){
-    setting.canvas.getContext('2d').clearRect(0, 0, setting.width, setting.height);
-    setting.status = STOP;
-    return;
+
+const fun = function(options){
+  var opts = {};
+  for( var i in defaults ){
+    opts[i] = defaults[i];
   }
-  if(canvas !== 'stop'){
-    setting.canvas = canvas;
-    setting.width = width;
-    setting.height = height;
-    setting.projection = projection;
-    setting.status === -1 && draw();
-    setting.status = START;
+  for( var i in options ){
+    opts[i] = options[i];
   }
+  return new Init(opts);
 }
+
+export default fun;
 
 function draw() {
-  var ctx = setting.canvas.getContext('2d');
-  ctx.lineWidth = setting.lineWidth;
-  const data = setting.data;
-  const speed = setting.speed;
+  const _options = this.options;
   const PI = Math.PI;
   const scaleRadius = d3.scaleLinear().domain([0, 40]).range([1, 50]).clamp(true);
   const scaleOpacity = d3.scaleLinear().domain([0, 40]).range([1, 0]).clamp(true);
-  const scaleColor = d3.scaleOrdinal(d3.schemeCategory20);
+  var {canvas, width, height, projection, data, speed} = this.options;
+  var ctx = canvas.getContext('2d');
+  ctx.lineWidth = _options.lineWidth;
 
-  demoData();
-
-  d3.timer(function() {
-    if(setting.status > PAUSE)step();
+  this.options.step = d3.timer(function() {
+    step();
   });
 
   function step(t) {
-    ctx.clearRect(0, 0, setting.width, setting.height);
-    var i = setting.data.length;
+    ctx.clearRect(0, 0, _options.width, _options.height);
+    var i = _options.data.length;
     do {
-      drawLine(setting.data[i], i);
-      drawLine(setting.data[i - 1], i - 1);
-      drawLine(setting.data[i - 2], i - 2);
-      drawLine(setting.data[i - 3], i - 3);
-      drawLine(setting.data[i - 4], i - 4);
+      drawLine(_options.data[i], i);
+      drawLine(_options.data[i - 1], i - 1);
+      drawLine(_options.data[i - 2], i - 2);
+      drawLine(_options.data[i - 3], i - 3);
+      drawLine(_options.data[i - 4], i - 4);
       i -= 5;
     } while (i > 0);
   }
@@ -171,70 +178,6 @@ function draw() {
       ctx.stroke();
     }
 
-    if (t2 >= 1) setting.data.splice(i, 1);
+    if (t2 >= 1) _options.data.splice(i, 1);
   }
-
-  function demoData() {
-    var lts = [
-      [84.9023, 41.748],
-      [88.7695, 31.6846],
-      [117.5977, 44.3408],
-      [96.2402, 35.4199],
-      [102.9199, 30.1904],
-      [128.1445, 48.5156]
-      [95.7129, 40.166],
-      [101.8652, 25.1807],
-      [108.2813, 23.6426],
-      [111.5332, 27.3779],
-      [109.5996, 35.6396],
-      [113.4668, 22.8076],
-      [126.4746, 43.5938],
-      [115.4004, 37.9688],
-      [112.2363, 31.1572],
-      [106.6113, 26.9385],
-      [118.7402, 36.4307],
-      [116.0156, 27.29],
-      [113.4668, 33.8818],
-      [122.3438, 41.0889],
-      [112.4121, 37.6611],
-      [117.2461, 32.0361],
-      [118.3008, 25.9277],
-      [120.498, 29.0918],
-      [120.0586, 32.915],
-      [107.7539, 30.1904],
-      [105.9961, 37.3096],
-      [109.9512, 19.2041],
-      [121.0254, 23.5986],
-      [116.4551, 40.2539],
-      [117.4219, 39.4189],
-      [121.4648, 31.2891],
-      [114.2578, 22.3242],
-      [113.5547, 22.1484]
-    ];
-    var ltsSize = lts.length;
-
-    function rand() {
-      var index = Math.floor(Math.random() * ltsSize);
-      var t = lts[index];
-      return t || lts[0];
-    }
-    //push
-    d3.interval(function() {
-      if(setting.status > PAUSE){
-        var point = {
-          ori: setting.projection(rand()),
-          dest: setting.projection(rand()),
-          ctrl: [0, 0],
-          time1: 0,
-          time2: 0,
-          step: 0,
-          tstep: 0,
-          color: d3.rgb(scaleColor( Math.floor(Math.random() * 20) ))
-        }
-        point.ctrl = point2cur([point.ori, point.dest], 0.4);
-        setting.data.push(point);
-      };
-    }, 60);
-  }
-  return setting;
 }
