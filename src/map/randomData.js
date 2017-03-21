@@ -24,7 +24,7 @@ var lts = [
   [117.5977, 44.3408],
   [96.2402, 35.4199],
   [102.9199, 30.1904],
-  [128.1445, 48.5156]
+  [128.1445, 48.5156],
   [95.7129, 40.166],
   [101.8652, 25.1807],
   [108.2813, 23.6426],
@@ -60,21 +60,19 @@ function rand() {
   var t = lts[index];
   return t || lts[0];
 }
-
-var fun = function() {return new SetData()}
-var SetData = function(){}
-SetData.prototype.getOptions = function(){
-  return this.options || {
-    status: STATUS['STOP'],
-    data: [],
-    projection: d3.geoMercator()
-  };
+var defaults = {
+  status: STATUS['STOP'],
+  data: [],
+  projection: d3.geoMercator()
 }
-SetData.prototype.start = function(_options){
-  _options = _options || this.getOptions();
+
+var _interval;
+
+export function start(_options){
+  _options = _options || defaults;
   _options.data = [];
   _options.status = STATUS['START'];
-  SetData._interval = d3.interval(function() {
+  _interval = d3.interval(function() {
     if(_options.status > STATUS.PAUSE){
       var point = {
         ori: _options.projection(rand()),
@@ -91,9 +89,8 @@ SetData.prototype.start = function(_options){
     };
   }, 60);
 }
-SetData.prototype.stop = function(_options){
-  _options = _options || this.getOptions();
+export function stop(_options){
+  _options = _options || defaults;
   _options.data = [];
-  SetData._interval && typeof SetData._interval.stop === 'function' && SetData._interval.stop();
+  _interval && typeof _interval.stop === 'function' && _interval.stop();
 }
-export default fun;

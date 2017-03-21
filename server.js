@@ -5,10 +5,8 @@ const bodyParser = require('body-parser');
 const urlencodedParser = bodyParser.urlencoded({ extended: false });
 
 const argv = process.argv;
-const host = argv[2] || '127.0.0.1';
-const port = argv[3] || 81;
-console.log(port);
-
+const host = '127.0.0.1';
+const port = argv[2] || 8081;
 const http = require('http').Server(app);
 http.listen(port, function(err) {
      if (err) {

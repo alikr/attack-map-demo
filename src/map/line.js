@@ -4,7 +4,7 @@
  */
 
 import * as d3 from 'd3';
-import randomData from './randomData.js';
+import {start,stop} from './randomData.js';
 
 //计算时间t的1次贝赛尔曲线坐标
 function cur1Pt(t, p) {
@@ -64,18 +64,19 @@ const defaults = {
   projection: d3.geoMercator(),
   status: -1,
   data: [],
-  speed: 0.02,
+  speed: 0.04,
   lineWidth: 4
 }
 const Init = function(options){
   this.options = options;
   return this;
 }
-Init.prototype.randomData = randomData();
+Init.prototype.startData = start;
+Init.prototype.stopData = stop;
 Init.prototype.draw = draw;
 Init.prototype.start = function(){
   this.options.status = STATUS['START'];
-  this.randomData.start(this.options);
+  this.startData(this.options);
   this.draw();
 }
 Init.prototype.stop = function(options){
@@ -87,7 +88,7 @@ Init.prototype.stop = function(options){
   var {canvas, width, height, step} = this.options;
   if(step && typeof step.stop ==='function')step.stop();
   canvas && canvas.getContext('2d').clearRect(0, 0, width, height);
-  this.randomData.stop(this.options);
+  this.stopData(this.options);
 }
 
 
@@ -107,8 +108,9 @@ export default fun;
 function draw() {
   const _options = this.options;
   const PI = Math.PI;
-  const scaleRadius = d3.scaleLinear().domain([0, 40]).range([1, 50]).clamp(true);
-  const scaleOpacity = d3.scaleLinear().domain([0, 40]).range([1, 0]).clamp(true);
+  const maxRadius = 40;
+  const scaleRadius = d3.scaleLinear().domain([0, maxRadius]).range([1, 50]).clamp(true);
+  const scaleOpacity = d3.scaleLinear().domain([0, maxRadius]).range([1, 0]).clamp(true);
   var {canvas, width, height, projection, data, speed} = this.options;
   var ctx = canvas.getContext('2d');
   ctx.lineWidth = _options.lineWidth;
@@ -118,6 +120,12 @@ function draw() {
   });
 
   function step(t) {
+    var j = _options.data.length;
+    while(j > 0){
+      j--;
+      var d = _options.data[j];
+      if (d.time2 >= 1 && d.tstep >= maxRadius) _options.data.splice(j, 1);
+    }
     ctx.clearRect(0, 0, _options.width, _options.height);
     var i = _options.data.length;
     do {
@@ -142,29 +150,31 @@ function draw() {
     let t1 = d.time1 = d.time1 >= 1 ? 1 : d.time1 + speed;
     let t2 = d.time2 = d.time1 > 0.3 && d.time2 < 1 ? d.time2 + speed : 0;
     t2 = t2 > 1 ? 1 : t2;
-    let grd = ctx.createLinearGradient(...ori, ...dest);
-    grd.addColorStop(0, rgbaString(color, 0));
-    grd.addColorStop(t2, rgbaString(color, 0));
-    if (t2 < 1) grd.addColorStop(t1 - 0.00001, rgbaString(color, 1));
-    grd.addColorStop(t1, rgbaString(color, 0));
-    if (t1 < 1) grd.addColorStop(1, rgbaString(color, 0));
-    ctx.strokeStyle = grd;
-    ctx.beginPath();
-    ctx.moveTo(ori[0], ori[1]);
-    ctx.quadraticCurveTo(ctrl[0], ctrl[1], dest[0], dest[1]);
-    ctx.stroke();
-    var [dx, dy] = curPoint(t1, [ori, dest, ctrl]);
-    var r = 20;
-    ctx.drawImage(particler(color.r, color.g, color.b, 1), dx - r / 2, dy - r / 2, r, r);
+    if(d.tstep === 0){
+      let grd = ctx.createLinearGradient(...ori, ...dest);
+      grd.addColorStop(0, rgbaString(color, 0));
+      grd.addColorStop(t2, rgbaString(color, 0));
+      if (t2 < 1) grd.addColorStop(t1 - 0.00001, rgbaString(color, 1));
+      grd.addColorStop(t1, rgbaString(color, 0));
+      if (t1 < 1) grd.addColorStop(1, rgbaString(color, 0));
+      ctx.strokeStyle = grd;
+      ctx.beginPath();
+      ctx.moveTo(ori[0], ori[1]);
+      ctx.quadraticCurveTo(ctrl[0], ctrl[1], dest[0], dest[1]);
+      ctx.stroke();
+      var [dx, dy] = curPoint(t1, [ori, dest, ctrl]);
+      var r = 20;
+      ctx.drawImage(particler(color.r, color.g, color.b, 1), dx - r / 2, dy - r / 2, r, r);
 
-    ctx.beginPath();
-    var cr = scaleRadius(d.step);
-    var opacity = scaleOpacity(d.step);
-    ctx.strokeStyle = rgbaString(color, opacity);
-    ctx.arc(...ori, cr, 0, 2 * PI);
-    var [cx, cy] = ori;
-    ctx.drawImage(particler(color.r, color.g, color.b, 1), cx - cr / 2, cy - cr / 2, cr, cr);
-    ctx.stroke();
+      ctx.beginPath();
+      var cr = scaleRadius(d.step);
+      var opacity = scaleOpacity(d.step);
+      ctx.strokeStyle = rgbaString(color, opacity);
+      ctx.arc(...ori, cr, 0, 2 * PI);
+      var [cx, cy] = ori;
+      ctx.drawImage(particler(color.r, color.g, color.b, 1), cx - cr / 2, cy - cr / 2, cr, cr);
+      ctx.stroke();
+    }
 
     if (t1 >= 1) {
       d.tstep++;
@@ -177,7 +187,5 @@ function draw() {
       ctx.drawImage(particler(color.r, color.g, color.b, 1), tx - tr / 2, ty - tr / 2, tr, tr);
       ctx.stroke();
     }
-
-    if (t2 >= 1) _options.data.splice(i, 1);
   }
 }
