@@ -66,7 +66,7 @@ function loadData(){
 }
 function loadData_API(){
   _data = [];
-  var i = 100;//模拟100条随机数据
+  var i = 100;//模拟随机数据
   while(i>0){
     var d = {"src":rand(),"dest":rand(),"time":(new Date()).getTime()};
     _data.push(d);
@@ -110,15 +110,23 @@ function next(index){
 }
 
 function push(d){
+  var ori = defaults.projection(d.src);
+  var dest = defaults.projection(d.dest);
+  ori[0] = ~~ori[0];
+  ori[1] = ~~ori[1];
+  dest[0] = ~~dest[0];
+  dest[1] = ~~dest[1];
+
   var point = {
     time: d.time,//原数据时间
-    ori: defaults.projection(d.src),//起点屏幕坐标
-    dest: defaults.projection(d.dest),//终点屏幕坐标
+    ori: ori,//起点屏幕坐标
+    dest: dest,//终点屏幕坐标
     ctrl: [0, 0],//控制点坐标
     time1: 0,//弧线结束点步长【0--| time2-->time1 |--1】
     time2: 0,//弧线开始点步长
     step: 0,//起点圆步长
     dstep: 0,//终点圆步长
+    stop: false,//动画是否结束
     color: d3.rgb(scaleColor(Math.floor(Math.random()*20)))
   }
   point.ctrl = point2cur([point.ori, point.dest], 0.4);

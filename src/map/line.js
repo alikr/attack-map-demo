@@ -108,6 +108,8 @@ export default fun;
 function draw() {
   const _options = this.options;
   const PI = Math.PI;
+  const PI_2 = PI * 2;
+  const R = 20;//动画线顶点圆半径
   const maxRadius = 40;
   const scaleRadius = d3.scaleLinear().domain([0, maxRadius]).range([1, 50]).clamp(true);
   const scaleOpacity = d3.scaleLinear().domain([0, maxRadius]).range([1, 0]).clamp(true);
@@ -120,27 +122,30 @@ function draw() {
   });
 
   function step(t) {
-    var j = _options.data.length;
-    while(j > 0){
-      j--;
-      var d = _options.data[j];
-      if (d.time2 >= 1 && d.dstep >= maxRadius) _options.data.splice(j, 1);
-    }
     ctx.clearRect(0, 0, _options.width, _options.height);
-    var i = _options.data.length;
-
-    //一次绘制线条数
-    var steps = 1000;
-    do {
-      for(var j = 0;j < steps;j++){
-        drawLine(_options.data[i - j], i - j);
+    var j = _options.data.length -1;
+    while (j >= 0) {
+      var d = _options.data[j];
+      d.stop && _options.data.splice(j, 1);
+      j--;
+    }
+    var i = _options.data.length -1;
+    var steps = 100;
+    while (i >= 0) {
+      for(var j = 0; j <= steps; j++){
+        var d = _options.data[i - j];
+        drawLine(d);
       }
-      i -= steps;
-    } while (i > 0);
+      i-=steps;
+    }
   }
 
-  function drawLine(d, i) {
-    if (!d) return;
+  function drawLine(d) {
+    if(d == undefined)return;
+    if(d.time2 >= 1 && d.dstep >= maxRadius){
+      d.stop = true;
+      return;
+    }
     const color = d.color;
     d.step++;
     let {
@@ -166,27 +171,27 @@ function draw() {
     ctx.quadraticCurveTo(ctrl[0], ctrl[1], dest[0], dest[1]);
     ctx.stroke();
     var [dx, dy] = curPoint(t1, [ori, dest, ctrl]);
-    var r = 20;
-    t1 < 1 && ctx.drawImage(particler(color.r, color.g, color.b, 1), dx - r / 2, dy - r / 2, r, r);
+    t1 < 1 && ctx.drawImage(particler(color.r, color.g, color.b, 1), dx - R / 2, dy - R / 2, R, R);
 
     //开始点
     ctx.beginPath();
     var cr = scaleRadius(d.step);
     var opacity = scaleOpacity(d.step);
     ctx.strokeStyle = rgbaString(color, opacity);
-    ctx.arc(...ori, cr, 0, 2 * PI);
+    ctx.arc(...ori, cr, 0, PI_2);
     ctx.stroke();
     var [cx, cy] = ori;
-    // ctx.drawImage(particler(color.r, color.g, color.b, 1), cx - cr / 2, cy - cr / 2, cr, cr);
+    ctx.drawImage(particler(color.r, color.g, color.b, 1), cx - cr / 2, cy - cr / 2, cr, cr);
 
     //结束点
     if (t1 >= 1) {
       d.dstep++;
       var tr = scaleRadius(d.dstep);
-      var popacity = scaleOpacity(d.dstep);
+      var d_opacity = scaleOpacity(d.dstep);
+      ctx.strokeStyle = rgbaString(color, d_opacity);
       var [tx, ty] = dest;
       ctx.beginPath();
-      ctx.arc(...dest, tr, 0, 2 * PI);
+      ctx.arc(...dest, tr, 0, PI_2);
       ctx.stroke();
       ctx.drawImage(particler(color.r, color.g, color.b, 1), tx - tr / 2, ty - tr / 2, tr, tr);
     }
