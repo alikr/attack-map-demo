@@ -124,17 +124,18 @@ function draw() {
     while(j > 0){
       j--;
       var d = _options.data[j];
-      if (d.time2 >= 1 && d.tstep >= maxRadius) _options.data.splice(j, 1);
+      if (d.time2 >= 1 && d.dstep >= maxRadius) _options.data.splice(j, 1);
     }
     ctx.clearRect(0, 0, _options.width, _options.height);
     var i = _options.data.length;
+
+    //一次绘制线条数
+    var steps = 1000;
     do {
-      drawLine(_options.data[i], i);
-      drawLine(_options.data[i - 1], i - 1);
-      drawLine(_options.data[i - 2], i - 2);
-      drawLine(_options.data[i - 3], i - 3);
-      drawLine(_options.data[i - 4], i - 4);
-      i -= 5;
+      for(var j = 0;j < steps;j++){
+        drawLine(_options.data[i - j], i - j);
+      }
+      i -= steps;
     } while (i > 0);
   }
 
@@ -147,45 +148,47 @@ function draw() {
       dest,
       ctrl
     } = d;
+
+    //弧线
     let t1 = d.time1 = d.time1 >= 1 ? 1 : d.time1 + speed;
-    let t2 = d.time2 = d.time1 > 0.3 && d.time2 < 1 ? d.time2 + speed : 0;
-    t2 = t2 > 1 ? 1 : t2;
-    if(d.tstep === 0){
-      let grd = ctx.createLinearGradient(...ori, ...dest);
-      grd.addColorStop(0, rgbaString(color, 0));
-      grd.addColorStop(t2, rgbaString(color, 0));
-      if (t2 < 1) grd.addColorStop(t1 - 0.00001, rgbaString(color, 1));
-      grd.addColorStop(t1, rgbaString(color, 0));
-      if (t1 < 1) grd.addColorStop(1, rgbaString(color, 0));
-      ctx.strokeStyle = grd;
-      ctx.beginPath();
-      ctx.moveTo(ori[0], ori[1]);
-      ctx.quadraticCurveTo(ctrl[0], ctrl[1], dest[0], dest[1]);
-      ctx.stroke();
-      var [dx, dy] = curPoint(t1, [ori, dest, ctrl]);
-      var r = 20;
-      ctx.drawImage(particler(color.r, color.g, color.b, 1), dx - r / 2, dy - r / 2, r, r);
+    let t2 = d.time2 = d.time1 > 0.3 ? d.time2 + speed : d.time2;
+    t2 = d.time2 = t2 > 1 ? 1 : t2;
+    let grd = ctx.createLinearGradient(...ori, ...dest);
+    grd.addColorStop(0, rgbaString(color, 0));
+    grd.addColorStop(t2, rgbaString(color, 0));
+    grd.addColorStop(t2, rgbaString(color, 0));
+    grd.addColorStop(t1, rgbaString(color, 1));
+    grd.addColorStop(t1, rgbaString(color, 0));
+    grd.addColorStop(1, rgbaString(color, 0));
+    ctx.strokeStyle = grd;
+    ctx.beginPath();
+    ctx.moveTo(ori[0], ori[1]);
+    ctx.quadraticCurveTo(ctrl[0], ctrl[1], dest[0], dest[1]);
+    ctx.stroke();
+    var [dx, dy] = curPoint(t1, [ori, dest, ctrl]);
+    var r = 20;
+    t1 < 1 && ctx.drawImage(particler(color.r, color.g, color.b, 1), dx - r / 2, dy - r / 2, r, r);
 
-      ctx.beginPath();
-      var cr = scaleRadius(d.step);
-      var opacity = scaleOpacity(d.step);
-      ctx.strokeStyle = rgbaString(color, opacity);
-      ctx.arc(...ori, cr, 0, 2 * PI);
-      var [cx, cy] = ori;
-      ctx.drawImage(particler(color.r, color.g, color.b, 1), cx - cr / 2, cy - cr / 2, cr, cr);
-      ctx.stroke();
-    }
+    //开始点
+    ctx.beginPath();
+    var cr = scaleRadius(d.step);
+    var opacity = scaleOpacity(d.step);
+    ctx.strokeStyle = rgbaString(color, opacity);
+    ctx.arc(...ori, cr, 0, 2 * PI);
+    ctx.stroke();
+    var [cx, cy] = ori;
+    // ctx.drawImage(particler(color.r, color.g, color.b, 1), cx - cr / 2, cy - cr / 2, cr, cr);
 
+    //结束点
     if (t1 >= 1) {
-      d.tstep++;
-      var tr = scaleRadius(d.tstep);
-      var popacity = scaleOpacity(d.tstep);
+      d.dstep++;
+      var tr = scaleRadius(d.dstep);
+      var popacity = scaleOpacity(d.dstep);
       var [tx, ty] = dest;
-      ctx.strokeStyle = rgbaString(color, popacity);
       ctx.beginPath();
       ctx.arc(...dest, tr, 0, 2 * PI);
-      ctx.drawImage(particler(color.r, color.g, color.b, 1), tx - tr / 2, ty - tr / 2, tr, tr);
       ctx.stroke();
+      ctx.drawImage(particler(color.r, color.g, color.b, 1), tx - tr / 2, ty - tr / 2, tr, tr);
     }
   }
 }
