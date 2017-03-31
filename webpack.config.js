@@ -1,6 +1,6 @@
 /*
- * @author smailsky
- * https://github.com/smailsky
+ * @author alikr
+ * https://github.com/alikr
  */
 
 const path = require('path')
@@ -11,8 +11,7 @@ const webpackMerge = require('webpack-merge');
 
 const config = {
   entry: {
-    'index': './src/index',
-    'lib': ["vue"]
+    'index': './src/index'
   },
   output: {
     path: './dist',
@@ -37,35 +36,16 @@ const config = {
       filename: 'css/[name].css',
       disable: false,
       allChunks: true
-    }),
-
-    new webpack.optimize.CommonsChunkPlugin({
-      name: "lib",
-      minChunks: Infinity,
-      filename: "js/lib.js",
-      warning: false
-    }),
+    })
   ],
   module: {
-    rules: [{
-      test: /\.vue$/,
-      loader: 'vue-loader',
-      options: {
-        loaders: {
-          css: ExtractTextPlugin.extract({
-            fallbackLoader: 'vue-style-loader',
-            loader: 'css-loader'
-          }),
-          js: {
-            loader: 'babel-loader'
-          }
-        }
-      }
-    }, {
+    rules: [
+    {
       test: /\.(js|es6)$/,
       loader: 'babel-loader',
       exclude: /node_module/
-    }, {
+    },
+    {
       test: /\.css$/,
       loader: ExtractTextPlugin.extract({
         fallback: 'style-loader',

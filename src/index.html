@@ -2,10 +2,22 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title><%= htmlWebpackPlugin.options.title %></title>
 </head>
 <body>
-	<div id="app"></div>
+		<div class="loading">加载中 <span class="ani_dot">...</span></div>
+		<div class="city"></div>
+    <canvas class="canvas"></canvas>
+    <svg class="map">
+      <defs>
+        <pattern id="hl" width="10" height="10" patternUnits="userSpaceOnUse">
+          <rect width="300" height="30" fill="#3C8B74"></rect>
+          <path d="M0,0L10,10z" stroke="#43BB84"></path>
+        </pattern>
+      </defs>
+      <g class="path"></g>
+      <g class="text"></g>
+    </svg>
 </body>
 </html>
